@@ -1,19 +1,20 @@
 # FCM Push Notification Test Harness — System Map
 
-Project: `/home/joyboy/PROJECTS/fcm_push_demo` (Flutter Android app, console-driven sending)
+Project: `/home/joyboy/PROJECTS/fcm_push_demo` (Flutter Android app branded **Tomato**, console-driven sending)
 Firebase project: `fcm-test-demo8f2a` (project number `1063953542827`)
 Android app id: `1:1063953542827:android:070089805397709b0151ee`
-Package: `com.example.fcm_push_demo` · Topic: `fcm-test` · Channel: `fcm_demo`
+Package: `com.example.fcm_push_demo` (launcher label `Tomato`) · Topic: `fcm-test` · Channel id: `fcm_demo` (display name `Tomato Delivery Alerts`)
 
 > Companion to the original harness at `test/fcm_test` (package `com.example.fcm_test`).
 > Difference: **no Python sender** — messages are sent manually from the Firebase console.
+> The UI is a fictional food-delivery skin ("Tomato") for demoing FCM behaviour; not affiliated with any commercial brand.
 
 ## 1. Who is who
 
 | Actor | Machine | Role |
 |---|---|---|
-| **End user** | Android phone (SM-A515F, Android 13) | Reads the push in the system tray, or opens the app and reads the in-app log. Taps notifications to exercise launch paths. |
-| **Operator / developer** | Linux workstation + browser | Clicks **Publish** in the Firebase console. That's the only input in the whole system. |
+| **End user** | Android phone (SM-A515F, Android 13) | Reads the push in the system tray, or opens the app and reads the in-app "Delivery Push Log". Taps notifications to exercise launch paths. |
+| **Operator / developer** | Linux workstation + browser | Clicks **Publish** in the Firebase console (the app's sample-payload panel suggests ready-made payloads). That's the only input in the whole system. |
 | **Google Play services (GMS)** | Phone, system process | Holds the always-on socket to Google. The only component that can make a notification appear when the app is not in the foreground. |
 | **Google FCM backend** | `fcm.googleapis.com` | Accepts console campaigns / API calls, resolves topic→tokens, routes to devices. |
 | **Firebase console** | `console.firebase.google.com` | Campaign composer + "Test on device" panel. Batch fan-out pipeline (latency: seconds to a few minutes). |
@@ -33,6 +34,7 @@ There is **no application server**. Sending is manual via the console. (The refe
 | `android/settings.gradle.kts:24` | `id("com.google.gms.google-services") version("4.4.4") apply false` | `flutterfire configure` |
 | `android/app/build.gradle.kts:4` | `id("com.google.gms.google-services")` applied | `flutterfire configure` |
 | `android/app/build.gradle.kts:18` | `isCoreLibraryDesugaringEnabled = true` (+ `:48` desugar_jdk_libs 2.1.4) — required by flutter_local_notifications | manual (Step 3) |
+| `android/app/src/main/res/values/colors.xml` | `notification_color #E23744` (Tomato brand red) | Tomato rebrand |
 
 ### On Google's side (cloud state)
 
@@ -49,9 +51,9 @@ There is **no application server**. Sending is manual via the console. (The refe
 | Store | Contents | Lifetime |
 |---|---|---|
 | GMS secure storage | This device's FCM registration token | until app uninstalled / token rotated |
-| `NotificationManager` channel | `fcm_demo` (importance=5/max), created at runtime in `lib/main.dart:54-70`; default channel declared in `AndroidManifest.xml:37-39` | until app cleared |
+| `NotificationManager` channel | id `fcm_demo`, display name `Tomato Delivery Alerts` (importance=5/max), created at runtime in `lib/main.dart:57-73`; default channel declared in `AndroidManifest.xml:38-39`; tray icon `ic_stat_tomato` + accent color `#E23744` via meta-data `:41-45` | until app cleared |
 | Notification records | posted notifications `pkg=com.example.fcm_push_demo` | until dismissed/tapped |
-| `FcmFeed` (`lib/main.dart:30-46`) | `ValueNotifier`s: status, token, permission, topicStatus, messages — the in-app log | **RAM only — cleared on app restart. Nothing is persisted.** |
+| `FcmFeed` (`lib/main.dart:33-49`) | `ValueNotifier`s: status, token, permission, topicStatus, messages — the in-app "Delivery Push Log" | **RAM only — cleared on app restart. Nothing is persisted.** |
 | Runtime permission | `POST_NOTIFICATIONS` (declared `AndroidManifest.xml:3`) | until revoked |
 
 ## 3. Network connections (every hop)
@@ -72,21 +74,21 @@ There is **no application server**. Sending is manual via the console. (The refe
 
 ```mermaid
 sequenceDiagram
-    participant App as App (com.example.fcm_push_demo)
+    participant App as App (com.example.fcm_push_demo / "Tomato")
     participant GMS as Google Play services
     participant FCM as fcm.googleapis.com
 
-    App->>App: main() Firebase.initializeApp() (lib/main.dart:174-179)
-    App->>App: startFcm() (lib/main.dart:126)
-    App->>App: requestPermission() (lib/main.dart:131) → authorized
-    App->>App: create channel fcm_demo @ max (lib/main.dart:54-70)
-    App->>GMS: getToken() (lib/main.dart:141)
+    App->>App: main() Firebase.initializeApp() (lib/main.dart:180-185)
+    App->>App: startFcm() (lib/main.dart:132)
+    App->>App: requestPermission() (lib/main.dart:137) → authorized
+    App->>App: create channel fcm_demo @ max (lib/main.dart:57-73)
+    App->>GMS: getToken() (lib/main.dart:147)
     GMS->>FCM: register device for appId
     FCM-->>GMS: registration token
     GMS-->>App: dCtxHljK…:APA91b… (shown in UI)
-    App->>FCM: subscribeToTopic("fcm-test") (lib/main.dart:150)
+    App->>FCM: subscribeToTopic("fcm-test") (lib/main.dart:156)
     FCM-->>App: subscribed
-    Note over App: status → "listening" (lib/main.dart:171)
+    Note over App: status → "listening" (lib/main.dart:177)
 ```
 
 ### 4b. Sending (console campaign)
@@ -112,21 +114,21 @@ sequenceDiagram
 flowchart TB
     P[Google Play services receives message] --> Q{app state?}
 
-    Q -->|FOREGROUND| F1["firebase_messaging.onMessage<br/>lib/main.dart:156"]
-    F1 --> F2["FcmFeed.add(entry source: foreground)<br/>in-app list UI (RAM only)"]
-    F1 --> F3["_showLocalNotification()<br/>lib/main.dart:90 → tray / heads-up"]
+    Q -->|FOREGROUND| F1["firebase_messaging.onMessage<br/>lib/main.dart:162"]
+    F1 --> F2["FcmFeed.add(entry source: foreground)<br/>Delivery Push Log UI (RAM only)"]
+    F1 --> F3["_showLocalNotification()<br/>lib/main.dart:93 → tray / heads-up"]
 
-    Q -->|BACKGROUND| B1["GMS renders notification payload itself<br/>channel from AndroidManifest.xml:37"]
-    B1 --> B2[["user sees tray notification"]]
-    B2 -->|tap| B3["onMessageOpenedApp<br/>lib/main.dart:162"]
+    Q -->|BACKGROUND| B1["GMS renders notification payload itself<br/>channel from AndroidManifest.xml:38"]
+    B1 --> B2[["user sees tray notification (Tomato stat icon)"]]
+    B2 -->|tap| B3["onMessageOpenedApp<br/>lib/main.dart:168"]
     B3 --> B4["FcmFeed.add(entry source: notification tap)"]
 
     Q -->|KILLED| K1["GMS renders notification (same as above)"]
-    K1 -->|tap| K2["getInitialMessage()<br/>lib/main.dart:166"]
+    K1 -->|tap| K2["getInitialMessage()<br/>lib/main.dart:172"]
     K2 --> K3["cold start → main() → feed entry"]
 
-    Q -->|data-only, no notification key| D1["background isolate<br/>firebaseMessagingBackgroundHandler<br/>lib/main.dart:111"]
-    D1 --> D2["shows local notification itself<br/>lib/main.dart:119-121"]
+    Q -->|data-only, no notification key| D1["background isolate<br/>firebaseMessagingBackgroundHandler<br/>lib/main.dart:117"]
+    D1 --> D2["shows local notification itself<br/>lib/main.dart:125-126"]
 ```
 
 ## 5. The wire payload (what the console sends)
@@ -136,7 +138,7 @@ Conceptually identical to an FCM v1 `messages:send` body:
 ```json
 {
   "message": {
-    "notification": { "title": "T1 foreground", "body": "topic to foreground" },
+    "notification": { "title": "Order Confirmed", "body": "Your pizza is in the oven" },
     "data": { "sent_at": "…", "source": "console" },
     "android": {
       "priority": "high",
@@ -147,6 +149,8 @@ Conceptually identical to an FCM v1 `messages:send` body:
 }
 ```
 
+The app's **Sample Payloads** panel (code icon in the app bar, `lib/main.dart:_showSamplePayloads`) offers ready-made examples: standard display, high-priority delivery, and data-only silent tracking.
+
 - `notification` → makes GMS draw it (works when app is background/killed)
 - `data` → always delivered to Dart code (console: "Additional options")
 - topic vs token → broadcast vs single device ("Test on device" tab)
@@ -156,23 +160,32 @@ Conceptually identical to an FCM v1 `messages:send` body:
 
 | Concern | Location |
 |---|---|
-| Constants `kTopic`/`kChannelId`/`kChannelName` | `lib/main.dart:10-12` |
-| `PushEntry` model | `lib/main.dart:13-28` |
-| In-memory store (`FcmFeed` + messages list) | `lib/main.dart:30-46` |
-| Channel creation (importance max) | `lib/main.dart:54-70` |
-| Message → entry mapping | `lib/main.dart:73-88` |
-| Foreground tray renderer | `lib/main.dart:90-107` |
-| Background isolate handler (data-only) | `lib/main.dart:111-122` |
-| Boot: permission → channel → token → topic → listeners | `lib/main.dart:126-171` |
-| Firebase boot | `lib/main.dart:174-179` |
-| UI (status card + message log) | `lib/main.dart:181-322` |
-| Permissions + default channel | `android/app/src/main/AndroidManifest.xml:2-3,37-39` |
+| Constants `kTopic`/`kChannelId`/`kChannelName`/brand colors | `lib/main.dart:10-14` |
+| `PushEntry` model | `lib/main.dart:16-30` |
+| In-memory store (`FcmFeed` + messages list) | `lib/main.dart:33-49` |
+| Channel creation (importance max, name `Tomato Delivery Alerts`) | `lib/main.dart:57-73` |
+| Message → entry mapping | `lib/main.dart:76-91` |
+| Foreground tray renderer | `lib/main.dart:93-113` |
+| Background isolate handler (data-only) | `lib/main.dart:117-128` |
+| Boot: permission → channel → token → topic → listeners | `lib/main.dart:132-177` |
+| Firebase boot | `lib/main.dart:180-185` |
+| App shell + theme (brand red, no debug banner) | `lib/main.dart:187-211` |
+| Home screen: status card + Delivery Push Log | `lib/main.dart:213-487` |
+| Sample-payload panel (operator helper) | `_showSamplePayloads` on `_TomatoHomePageState` |
+| Push entry card (icon heuristic, source badge) | `lib/main.dart:489-582` |
+| Payload card (sample panel) | `lib/main.dart:584-638` |
+| Info row | `lib/main.dart:640-679` |
+| Permissions + default channel/icon/color | `android/app/src/main/AndroidManifest.xml:2-3,38-45` |
+| Notification color resource | `android/app/src/main/res/values/colors.xml` |
+| Tray stat icon | `android/app/src/main/res/drawable*/ic_stat_tomato.png` |
 | google-services plugin | `android/app/build.gradle.kts:4`, `android/settings.gradle.kts:24` |
 | Application id | `android/app/build.gradle.kts:27` |
 | Static Firebase config | `lib/firebase_options.dart:56-60` |
 | Widget tests (3) | `test/widget_test.dart` |
 
 ## 7. Verified behaviour (live E2E, 2026-10-09, SM-A515F / Android 13)
+
+Run against the pre-rebrand UI; FCM plumbing is unchanged by the Tomato rebrand.
 
 | Case | Result |
 |---|---|
@@ -184,11 +197,12 @@ Conceptually identical to an FCM v1 `messages:send` body:
 
 ## 8. Notable properties / gotchas
 
-1. **No persistence** — the in-app message list is RAM-only (`FcmFeed`); restart clears it.
+1. **No persistence** — the in-app log is RAM-only (`FcmFeed`); restart clears it.
 2. **No app server** — sends are manual console campaigns; latency is batch-level (2–5 min), not the ~1s a direct `messages:send` API call would give.
-3. **Two renderers** — foreground: our Dart code draws the notification; background/killed: GMS draws it. Same channel `fcm_demo` both ways, so it looks identical.
+3. **Two renderers** — foreground: our Dart code draws the notification; background/killed: GMS draws it. Same channel `fcm_demo` both ways, so it looks identical (Tomato stat icon + red accent).
 4. **Topic vs token** — topic membership lives only in Google's cloud; nothing on disk records it. Topic `fcm-test` is shared with the companion `com.example.fcm_test` app — one campaign reaches both.
-5. **Token is per-install** — it rotates; `onTokenRefresh` (`lib/main.dart:145`) keeps the UI current.
+5. **Token is per-install** — it rotates; `onTokenRefresh` (`lib/main.dart:151`) keeps the UI current.
 6. **FCM v1 only** — legacy HTTP API is dead; campaigns go through `fcm.googleapis.com/v1`.
 7. **Force-stop ≠ killed** — `am force-stop` (or Settings → Force stop) sets Android's **stopped state**: the package receives **no broadcasts at all**, so FCM delivers nothing until the app is manually launched once. The "killed" test must use process death (swipe-away / `am kill`), not force-stop.
 8. **Security note** — the Android `apiKey` in `google-services.json`/`firebase_options.dart` is not a secret (it ships in every APK; Firebase docs). Real sending authority is the OAuth refresh token in `~/.config/configstore/firebase-tools.json` — outside this repo, never committed.
+9. **Branding is skin-deep** — "Tomato" is a fictional delivery brand for demo purposes; the FCM plumbing, topic, channel id, and package name are unchanged from the original harness.
