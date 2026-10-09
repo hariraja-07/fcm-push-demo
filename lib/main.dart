@@ -83,10 +83,50 @@ PushEntry _toEntry(RemoteMessage message, {required String source}) {
   );
 }
 
+int _notificationId = 0;
+
+/// Foreground renderer — FCM stays silent while the app is open,
+/// so we draw the tray notification ourselves on channel fcm_demo.
+Future<void> _showLocalNotification(String title, String body) async {
+  final id = _notificationId++ % 2147483647;
+  await _localNotifications.show(
+    id: id,
+    title: title,
+    body: body,
+    notificationDetails: const NotificationDetails(
+      android: AndroidNotificationDetails(
+        kChannelId,
+        kChannelName,
+        channelDescription: 'Push messages from the FCM harness',
+        importance: Importance.max,
+        priority: Priority.high,
+      ),
+    ),
+  );
+}
+
+/// Runs in a background isolate for data-only messages (no notification
+/// key): Play services won't render those, so we do it ourselves.
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  if (message.notification == null) {
+    final data = message.data;
+    final title = data['title']?.toString() ?? '(no title)';
+    final body = data['body']?.toString() ?? '';
+    await _initLocalNotifications();
+    await _showLocalNotification(title, body);
+  }
+}
+
 /// Permission → channel → token → topic → foreground listener.
 /// Runs before runApp.
 Future<void> startFcm() async {
   final feed = FcmFeed.instance;
+
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   final settings = await FirebaseMessaging.instance.requestPermission(
     alert: true,
@@ -114,8 +154,19 @@ Future<void> startFcm() async {
   }
 
   FirebaseMessaging.onMessage.listen((message) {
-    feed.add(_toEntry(message, source: 'foreground'));
+    final entry = _toEntry(message, source: 'foreground');
+    feed.add(entry);
+    _showLocalNotification(entry.title, entry.body);
   });
+
+  FirebaseMessaging.onMessageOpenedApp.listen((message) {
+    feed.add(_toEntry(message, source: 'notification tap'));
+  });
+
+  final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null) {
+    feed.add(_toEntry(initialMessage, source: 'notification tap'));
+  }
 
   feed.status.value = 'listening';
 }
