@@ -1,18 +1,12 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fcm_push_demo/main.dart';
 
 void main() {
-  testWidgets('Shows fcm push test', (WidgetTester tester) async {
+  testWidgets('shows boot status and empty token slot', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    expect(find.text('fcm push test'), findsOneWidget);
+    expect(find.text('Status: starting'), findsOneWidget);
+    expect(find.text('(no token yet)'), findsOneWidget);
   });
 }
