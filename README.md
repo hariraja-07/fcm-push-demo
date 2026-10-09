@@ -16,6 +16,18 @@ An end-to-end, deterministic mobile push notification test harness built with **
 
 ---
 
+## 🖼️ Live Demo
+
+A 4-message marketing broadcast to topic `fcm-test` via the FCM HTTP v1 API, captured on a physical Android 13 device (all accepted by FCM in ~1s each, delivered at 23:58).
+
+| Before | System tray (all 4 delivered) | In-app feed (icons matched) |
+|:---:|:---:|:---:|
+| ![Home before](doc/assets/screenshots/screenshot_home_before.jpg) | ![Notification tray](doc/assets/screenshots/screenshot_notification_tray.jpg) | ![Home after](doc/assets/screenshots/screenshot_home_after.jpg) |
+
+The tray shows the Tomato stat icon on every entry; the in-app log demonstrates the heuristic icon mapping (🛵 delivery, ✓ delivered, 🔔 default) and per-message `foreground` source attribution.
+
+---
+
 ## 🎯 What This Project Demonstrates
 
 Reliable mobile push delivery in modern operating systems is non-trivial due to aggressive OS battery optimization, background execution limits, and notification permission changes. This repository provides a reference implementation addressing the core engineering challenges:
@@ -191,6 +203,10 @@ flutter run
 │   │   └── src/main/
 │   │       ├── AndroidManifest.xml # POST_NOTIFICATIONS, default channel & icons
 │   │       └── res/               # Tomato launcher mipmaps & tray drawables
+├── doc/
+│   └── assets/
+│       ├── *.svg / tomato_icon.png# Tomato brand assets
+│       └── screenshots/           # Live broadcast captures (tray + feed)
 ├── lib/
 │   ├── firebase_options.dart      # Platform credentials generated via FlutterFire
 │   └── main.dart                  # Foreground listener, background isolate & Tomato UI
