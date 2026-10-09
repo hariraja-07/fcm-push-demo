@@ -5,17 +5,18 @@ import 'package:fcm_push_demo/main.dart';
 void main() {
   setUp(FcmFeed.instance.clear);
 
-  testWidgets('renders status card and empty message log', (
+  testWidgets('renders status card and empty push log', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const TomatoApp());
 
-    expect(find.text('FCM Push Demo'), findsOneWidget);
-    expect(find.textContaining('No messages yet'), findsOneWidget);
+    expect(find.text('Tomato'), findsOneWidget);
+    expect(find.textContaining('No push messages received yet'), findsOneWidget);
     expect(find.text('starting'), findsOneWidget);
     expect(find.text('unknown'), findsOneWidget);
     expect(find.text('pending'), findsOneWidget);
-    expect(find.text('(no token yet)'), findsOneWidget);
+    expect(find.text('(retrieving token...)'), findsOneWidget);
+    expect(find.text('Delivery Push Log (0)'), findsOneWidget);
   });
 
   testWidgets('renders a received push message', (WidgetTester tester) async {
@@ -23,23 +24,23 @@ void main() {
       PushEntry(title: 'Hello', body: 'world', source: 'test'),
     );
 
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const TomatoApp());
 
     expect(find.text('Hello'), findsOneWidget);
-    expect(find.textContaining('world'), findsOneWidget);
-    expect(find.textContaining('test'), findsOneWidget);
-    expect(find.text('Received messages (1)'), findsOneWidget);
+    expect(find.text('world'), findsOneWidget);
+    expect(find.text('test'), findsOneWidget);
+    expect(find.text('Delivery Push Log (1)'), findsOneWidget);
   });
 
-  testWidgets('clear empties the message log', (WidgetTester tester) async {
+  testWidgets('clear empties the push log', (WidgetTester tester) async {
     FcmFeed.instance.add(
       PushEntry(title: 'Hello', body: 'world', source: 'test'),
     );
     FcmFeed.instance.clear();
 
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const TomatoApp());
 
-    expect(find.textContaining('No messages yet'), findsOneWidget);
-    expect(find.text('Received messages (0)'), findsOneWidget);
+    expect(find.textContaining('No push messages received yet'), findsOneWidget);
+    expect(find.text('Delivery Push Log (0)'), findsOneWidget);
   });
 }
