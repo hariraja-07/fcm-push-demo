@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Background: Signature Tomato Red Squircle (#E23744) -->
+  <rect width="512" height="512" rx="112" fill="#E23744"/>
+
+  <!-- Tomato Body: Pure White Minimalist Silhouette -->
+  <g fill="#FFFFFF">
+    <!-- Plump Base -->
+    <ellipse cx="256" cy="290" rx="130" ry="118"/>
+
+    <!-- Calyx Stem (Tilted) -->
+    <path d="M 248 185 C 253 145, 267 130, 276 122 C 283 128, 275 145, 260 185 Z" fill="#FFFFFF"/>
+
+    <!-- 5-Point Geometric Leaves -->
+    <!-- Center leaf -->
+    <polygon points="256,155 248,185 264,185"/>
+    <!-- Left outer & inner leaves -->
+    <polygon points="160,172 250,185 220,205"/>
+    <polygon points="195,145 250,185 235,175"/>
+    <!-- Right inner & outer leaves -->
+    <polygon points="317,145 262,185 277,175"/>
+    <polygon points="352,172 262,185 292,205"/>
+  </g>
+
+  <!-- Top Dip Notch (Negative Space Cutout) -->
+  <ellipse cx="256" cy="184" rx="22" ry="14" fill="#E23744"/>
+
+  <!-- Subtle Brand Accent Curve (Notification Smile Notch) -->
+  <path d="M 195 320 C 220 348, 292 348, 317 320" fill="none" stroke="#E23744" stroke-width="12" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Card Background: Clean White with Subtle Slate Stroke -->
+  <rect width="512" height="512" rx="112" fill="#FFFFFF" stroke="#EEF0F3" stroke-width="8"/>
+
+  <!-- Tomato Body: Signature Food-Tech Red (#E23744) -->
+  <ellipse cx="256" cy="290" rx="130" ry="118" fill="#E23744"/>
+
+  <!-- Top Dip Notch -->
+  <ellipse cx="256" cy="184" rx="22" ry="14" fill="#FFFFFF"/>
+
+  <!-- Calyx & Stem: Crisp Modern Emerald Green (#10B981) -->
+  <g fill="#10B981">
+    <!-- Tilted Stem -->
+    <path d="M 248 185 C 253 145, 267 130, 276 122 C 283 128, 275 145, 260 185 Z"/>
+
+    <!-- Leaves -->
+    <polygon points="256,155 248,185 264,185"/>
+    <polygon points="160,172 250,185 220,205"/>
+    <polygon points="195,145 250,185 235,175"/>
+    <polygon points="317,145 262,185 277,175"/>
+    <polygon points="352,172 262,185 292,205"/>
+  </g>
+
+  <!-- Clean Flat Highlight Accent on Shoulder -->
+  <path d="M 160 270 C 150 230, 185 195, 220 188" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" opacity="0.85"/>
+</svg>
